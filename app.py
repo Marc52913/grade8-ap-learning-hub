@@ -374,7 +374,7 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# ── Curriculum Data (with FULL DEFINITION reviewers) ────────────────
+# ── Curriculum Data ─────────────────────────────────────────────────
 GRADE8 = {
     "overview": (
         "Ang Araling Panlipunan sa Grade 8 ay naglalayong tuklasin ang mundo sa pamamagitan "
@@ -1130,7 +1130,6 @@ def get_ai_response(user_message):
         )
 
     try:
-        # Build message history
         messages = [{"role": "system", "content": get_system_prompt()}]
         for msg in st.session_state.chat_messages:
             messages.append({"role": msg["role"], "content": msg["content"]})
@@ -1453,13 +1452,18 @@ elif menu == "🤖 AI Chatbot":
 
     if user_input:
         # Add user message
-        st.session_state.chat_messages.append({"role": "user", "content": user_input})
+        st.session_state.chat_messages.append(
+            {"role": "user", "content": user_input}
+        )
 
-        # Get AI response        with st.spinner("Nag-iisip ang AI..."):
+        # Get AI response
+        with st.spinner("Nag-iisip ang AI..."):
             ai_response = get_ai_response(user_input)
 
         # Add AI response
-        st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
+        st.session_state.chat_messages.append(
+            {"role": "assistant", "content": ai_response}
+        )
 
         st.rerun()
 
