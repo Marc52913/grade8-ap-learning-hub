@@ -2,7 +2,7 @@
 Grade 8 Araling Panlipunan Learning Hub
 Batay sa MATATAG K to 10 Curriculum
 Pinagmulan: DepEd MATATAG Araling Panlipunan Curriculum Guide (Grade 8)
-May AI Chatbot para sa tulong sa pag-aaral.
+May AI Chatbot na sumusuporta sa English at Filipino.
 """
 
 import streamlit as st
@@ -111,15 +111,20 @@ if "selected_topic_id" not in st.session_state:
 if "quiz_submitted" not in st.session_state:
     st.session_state.quiz_submitted = False
 
+# Language preference for chatbot
+if "chat_language" not in st.session_state:
+    st.session_state.chat_language = "🌐 Auto-detect"
+
 # Initialize chat history
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = [
         {
             "role": "assistant",
             "content": (
-                "Kumusta! Ako ang iyong AI study buddy para sa Grade 8 Araling Panlipunan. "
-                "Maaari mo akong tanungin tungkol sa mga paksa tulad ng mga sinaunang kabihasnan, "
-                "Renaissance, Rebolusyong Industriyal, United Nations, at iba pa. "
+                "Hi! I'm your AI study buddy for Grade 8 Araling Panlipunan. "
+                "You can ask me about topics like ancient civilizations, the Renaissance, "
+                "the Industrial Revolution, the United Nations, and more. "
+                "Kumusta! Ako ang iyong AI study buddy — puwede ka ring magtanong sa Filipino. "
                 "Ano ang gusto mong pag-usapan?"
             ),
         }
@@ -130,14 +135,12 @@ T = THEMES[st.session_state.theme]
 
 st.markdown(f"""
 <style>
-    /* Main background */
     .stApp {{
         background-color: {T['bg']};
         background-image: {T['bg_gradient']};
         color: {T['text']};
     }}
 
-    /* Sidebar */
     [data-testid="stSidebar"] {{
         background-color: {T['sidebar_bg']};
         border-right: 2px solid {T['sidebar_border']};
@@ -149,7 +152,6 @@ st.markdown(f"""
         color: {T['text']} !important;
     }}
 
-    /* Headers */
     .main-header {{
         font-size: 2.8rem;
         font-weight: 700;
@@ -166,13 +168,11 @@ st.markdown(f"""
         font-style: italic;
     }}
 
-    /* Headings */
     h1, h2, h3, h4, h5, h6 {{
         color: {T['accent']} !important;
     }}
     h1 {{ border-bottom: 2px solid {T['accent_dark']}; padding-bottom: 0.3rem; }}
 
-    /* Topic cards */
     .topic-card {{
         background: {T['card_bg']};
         border-left: 6px solid {T['card_border']};
@@ -198,7 +198,6 @@ st.markdown(f"""
         line-height: 1.5;
     }}
 
-    /* Week badge */
     .week-badge {{
         display: inline-block;
         background: {T['badge_bg']};
@@ -211,7 +210,6 @@ st.markdown(f"""
         text-transform: uppercase;
     }}
 
-    /* Reviewer panel */
     .reviewer-panel {{
         background: {T['panel_bg']};
         border: 2px solid {T['panel_border']};
@@ -260,7 +258,6 @@ st.markdown(f"""
         font-weight: 600;
     }}
 
-    /* Metrics */
     [data-testid="stMetricValue"] {{
         color: {T['accent']} !important;
         font-weight: 700;
@@ -275,7 +272,6 @@ st.markdown(f"""
         border: 1px solid {T['accent_dark']};
     }}
 
-    /* Buttons */
     .stButton>button, .stFormSubmitButton>button {{
         background-color: {T['button_bg']};
         color: {T['button_text']};
@@ -291,7 +287,6 @@ st.markdown(f"""
         border-color: {T['accent_light']};
     }}
 
-    /* Expander */
     [data-testid="stExpander"] {{
         background-color: {T['metric_bg']};
         border: 1px solid {T['accent_dark']};
@@ -302,32 +297,27 @@ st.markdown(f"""
         font-weight: 600;
     }}
 
-    /* Alerts */
     [data-testid="stAlert"] {{
         background-color: {T['metric_bg']};
         border-left: 4px solid {T['accent']};
         color: {T['text']};
     }}
 
-    /* Radio */
     [data-testid="stRadio"] label {{
         color: {T['text']} !important;
     }}
 
-    /* Selectbox */
     [data-testid="stSelectbox"] > div > div {{
         background-color: {T['metric_bg']};
         color: {T['text']};
         border: 1px solid {T['accent_dark']};
     }}
 
-    /* Divider */
     hr {{
         border-color: {T['divider']};
         opacity: 0.5;
     }}
 
-    /* Footer */
     .footer {{
         text-align: center;
         color: {T['text_muted']};
@@ -338,24 +328,17 @@ st.markdown(f"""
         font-style: italic;
     }}
 
-    /* Paragraphs */
     p, li, span, div {{
         color: {T['text']};
     }}
 
-    /* Tables */
-    table {{
-        color: {T['text']};
-    }}
+    table {{ color: {T['text']}; }}
     th {{
         background-color: {T['metric_bg']};
         color: {T['accent']} !important;
     }}
-    td {{
-        color: {T['text']};
-    }}
+    td {{ color: {T['text']}; }}
 
-    /* Chat messages */
     .chat-message {{
         padding: 1rem;
         border-radius: 0.5rem;
@@ -370,6 +353,17 @@ st.markdown(f"""
         background: {T['metric_bg']};
         color: {T['text']};
         border-left: 4px solid {T['accent_light']};
+    }}
+    .lang-badge {{
+        display: inline-block;
+        background: {T['badge_bg']};
+        color: {T['badge_text']};
+        padding: 0.15rem 0.6rem;
+        border-radius: 0.9rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-left: 0.4rem;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -1102,35 +1096,67 @@ QUIZ_QUESTIONS = [
     },
 ]
 
-# ── AI Chatbot Functions ────────────────────────────────────────────
-def get_system_prompt():
-    """System prompt for the AI chatbot."""
-    return (
-        "Ikaw ay isang AI study buddy para sa Grade 8 Araling Panlipunan (Social Studies) "
-        "na nakabase sa MATATAG Curriculum ng Pilipinas. Ang iyong layunin ay tulungan ang "
-        "mga mag-aaral na maunawaan ang mga paksa tulad ng:\n"
-        "- Mga Sinaunang Kabihasnan (Heograpiya, Minoan/Mycenaean, Istrukturang Panlipunan)\n"
-        "- Kolonyalismo, Imperyalismo at Nasyonalismo (Constantinople, Renaissance, Repormasyon, Rebolusyong Pranses, Panahon ng Paggalugad)\n"
-        "- Pagbuo ng mga Nasyon-Estado at Rebolusyong Industriyal\n"
-        "- Pandaigdigang Kooperasyon at Kontemporaryong Isyu (UN, WHO, COVID-19, Climate Change, Karapatang Pantao)\n\n"
-        "Sumagot ka sa Filipino o Taglish, depende sa tanong. Maging friendly, "
-        "encouraging, at educational. Gumamit ng mga halimbawa at simpleng paliwanag. "
-        "Kung hindi ka sigurado sa isang sagot, sabihin ito nang tapat. "
-        "Huwag magbigay ng maling impormasyon."
+# ── AI Chatbot Functions (with Language Support) ────────────────────
+def get_system_prompt(language):
+    """Build system prompt based on selected language."""
+    base_topics = (
+        "- Ancient Civilizations (Geography, Minoan/Mycenaean, Social Structures)\n"
+        "- Colonialism, Imperialism & Nationalism (Constantinople, Renaissance, Reformation, French Revolution, Age of Exploration)\n"
+        "- Formation of Nation-States and the Industrial Revolution\n"
+        "- Global Cooperation and Contemporary Issues (UN, WHO, COVID-19, Climate Change, Human Rights)"
     )
+
+    if language == "🇬🇧 English":
+        return (
+            "You are an AI study buddy for Grade 8 Araling Panlipunan (Social Studies) "
+            "based on the MATATAG Curriculum of the Philippines. Your goal is to help "
+            "students understand topics such as:\n"
+            f"{base_topics}\n\n"
+            "IMPORTANT: You must ALWAYS respond in ENGLISH only. Use clear, friendly, "
+            "and educational language. Provide examples and simple explanations. "
+            "If you are unsure about an answer, say so honestly. Never give incorrect information."
+        )
+    elif language == "🇵🇭 Filipino":
+        return (
+            "Ikaw ay isang AI study buddy para sa Grade 8 Araling Panlipunan (Social Studies) "
+            "na nakabase sa MATATAG Curriculum ng Pilipinas. Ang iyong layunin ay tulungan ang "
+            "mga mag-aaral na maunawaan ang mga paksa tulad ng:\n"
+            f"{base_topics}\n\n"
+            "MAHALAGA: Dapat kang LAGING sumagot sa FILIPINO lamang. Maging friendly, "
+            "encouraging, at educational. Gumamit ng mga halimbawa at simpleng paliwanag. "
+            "Kung hindi ka sigurado sa isang sagot, sabihin ito nang tapat. "
+            "Huwag magbigay ng maling impormasyon."
+        )
+    else:  # Auto-detect
+        return (
+            "You are an AI study buddy for Grade 8 Araling Panlipunan (Social Studies) "
+            "based on the MATATAG Curriculum of the Philippines. Your goal is to help "
+            "students understand topics such as:\n"
+            f"{base_topics}\n\n"
+            "IMPORTANT: Detect the language of the user's question and respond in the SAME language. "
+            "If the user writes in English, respond in English. If the user writes in Filipino or Taglish, "
+            "respond in Filipino or Taglish. Be friendly, encouraging, and educational. "
+            "Use examples and simple explanations. If you are unsure about an answer, say so honestly. "
+            "Never give incorrect information."
+        )
 
 
 def get_ai_response(user_message):
-    """Get AI response from OpenAI."""
+    """Get AI response from OpenAI based on selected language."""
     client = get_openai_client()
     if client is None:
         return (
             "⚠️ Hindi available ang AI chatbot. Kailangan i-set up ang OPENAI_API_KEY "
-            "sa Streamlit secrets. Tingnan ang dokumentasyon para sa mga tagubilin."
+            "sa Streamlit secrets. Tingnan ang dokumentasyon para sa mga tagubilin.\n\n"
+            "⚠️ The AI chatbot is not available. Please set up the OPENAI_API_KEY "
+            "in Streamlit secrets. See the documentation for instructions."
         )
 
     try:
-        messages = [{"role": "system", "content": get_system_prompt()}]
+        # Build messages with language-aware system prompt
+        messages = [
+            {"role": "system", "content": get_system_prompt(st.session_state.chat_language)}
+        ]
         for msg in st.session_state.chat_messages:
             messages.append({"role": msg["role"], "content": msg["content"]})
         messages.append({"role": "user", "content": user_message})
@@ -1143,7 +1169,7 @@ def get_ai_response(user_message):
         )
         return response.choices[0].message.content
     except Exception as e:
-        return f"⚠️ May error sa AI: {str(e)}"
+        return f"⚠️ May error sa AI / AI error: {str(e)}"
 
 
 # ── Sidebar Navigation ──────────────────────────────────────────────
@@ -1156,9 +1182,9 @@ with st.sidebar:
     st.title("🇵🇭 Grade 8 AP Hub")
     st.caption("MATATAG K to 10 Curriculum")
 
-    st.markdown("### 🎨 Tema")
+    st.markdown("### 🎨 Tema / Theme")
     theme_choice = st.selectbox(
-        "Pumili ng tema:",
+        "Pumili ng tema / Choose theme:",
         options=list(THEMES.keys()),
         index=list(THEMES.keys()).index(st.session_state.theme),
         key="theme_picker",
@@ -1171,7 +1197,7 @@ with st.sidebar:
     st.markdown("---")
 
     menu = st.radio(
-        "Pumili ng seksyon:",
+        "Pumili ng seksyon / Choose section:",
         [
             "🏠 Home",
             "📖 Pangkalahatang-tanaw",
@@ -1184,7 +1210,7 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.markdown("**Pinagmulan:**")
+    st.markdown("**Pinagmulan / Source:**")
     st.caption("DepEd MATATAG Araling Panlipunan Curriculum Guide (Grade 8).")
 
 # ── Home Page ───────────────────────────────────────────────────────
@@ -1218,7 +1244,7 @@ if menu == "🏠 Home":
     - **Pangkalahatang-tanaw** — Ang pilosopiya at balangkas ng Grade 8 AP sa ilalim ng MATATAG
     - **Mga Paksa ayon sa Termino** — Lahat ng paksa mula Term 1 hanggang Quarter 4, may **kumpletong reviewer**
     - **Interaktibong Pagsusulit** — Subukan ang iyong kaalaman sa mga susing konsepto
-    - **🤖 AI Chatbot** — Magtanong sa AI study buddy tungkol sa mga paksa
+    - **🤖 AI Chatbot** — Magtanong sa AI study buddy sa **English o Filipino**
 
     #### Ang Grade 8 sa Isang Tingin
 
@@ -1227,7 +1253,7 @@ if menu == "🏠 Home":
     - **Term 3:** Pagbuo ng mga Nasyon-Estado at Rebolusyong Industriyal
     - **Quarter 4:** Pandaigdigang Kooperasyon at Kontemporaryong Isyu
 
-    💡 **Tip:** Pumunta sa *Mga Paksa ayon sa Termino* at i-click ang **📖 Reviewer** button. Maaari mo ring tanungin ang **🤖 AI Chatbot** kung may hindi malinaw na konsepto.
+    💡 **Tip:** Pumunta sa *Mga Paksa ayon sa Termino* at i-click ang **📖 Reviewer** button. Maaari mo ring tanungin ang **🤖 AI Chatbot** sa English o Filipino.
     """)
 
 # ── Pangkalahatang-tanaw ────────────────────────────────────────────
@@ -1418,37 +1444,77 @@ elif menu == "🧠 Interaktibong Pagsusulit":
 # ── AI Chatbot ──────────────────────────────────────────────────────
 elif menu == "🤖 AI Chatbot":
     st.title("🤖 AI Study Buddy")
-    st.markdown(
-        "Magtanong sa AI tungkol sa mga paksa ng Grade 8 Araling Panlipunan. "
-        "Maaari kang magtanong tungkol sa mga sinaunang kabihasnan, Renaissance, "
-        "Rebolusyong Industriyal, United Nations, at iba pa."
-    )
+
+    # Language selector
+    st.markdown("### 🌐 Language / Wika")
+    lang_col1, lang_col2 = st.columns([2, 3])
+    with lang_col1:
+        lang_choice = st.radio(
+            "Pumili ng wika / Choose language:",
+            ["🌐 Auto-detect", "🇬🇧 English", "🇵🇭 Filipino"],
+            index=["🌐 Auto-detect", "🇬🇧 English", "🇵🇭 Filipino"].index(
+                st.session_state.chat_language
+            ),
+            horizontal=False,
+        )
+        if lang_choice != st.session_state.chat_language:
+            st.session_state.chat_language = lang_choice
+            st.rerun()
+
+    with lang_col2:
+        if st.session_state.chat_language == "🇬🇧 English":
+            st.info(
+                "**English mode:** The AI will respond in English only. "
+                "Ask your questions in English."
+            )
+        elif st.session_state.chat_language == "🇵🇭 Filipino":
+            st.info(
+                "**Filipino mode:** Ang AI ay sasagot sa Filipino lamang. "
+                "Magtanong sa Filipino."
+            )
+        else:
+            st.info(
+                "**Auto-detect mode:** The AI will respond in the same language as your question. "
+                "Ang AI ay sasagot sa parehong wika ng iyong tanong."
+            )
+
+    st.markdown("---")
 
     # Check if API key is configured
     if get_openai_client() is None:
         st.warning(
             "⚠️ Hindi pa naka-set up ang OpenAI API key. "
-            "Kailangan itong i-configure sa Streamlit secrets upang gumana ang chatbot. "
-            "Tingnan ang dokumentasyon para sa mga tagubilin."
+            "Kailangan itong i-configure sa Streamlit secrets upang gumana ang chatbot.\n\n"
+            "⚠️ The OpenAI API key is not configured. "
+            "Please set it up in Streamlit secrets for the chatbot to work."
         )
 
-    # Display chat messages
+    # Display chat messages with language badge
     for message in st.session_state.chat_messages:
         if message["role"] == "user":
             st.markdown(
                 f'<div class="chat-message chat-user">'
-                f'<strong>🧑 Ikaw:</strong><br>{message["content"]}</div>',
+                f'<strong>🧑 You / Ikaw:</strong><br>{message["content"]}</div>',
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
                 f'<div class="chat-message chat-assistant">'
-                f'<strong>🤖 AI Study Buddy:</strong><br>{message["content"]}</div>',
+                f'<strong>🤖 AI Study Buddy</strong>'
+                f'<span class="lang-badge">{st.session_state.chat_language}</span>'
+                f'<br>{message["content"]}</div>',
                 unsafe_allow_html=True,
             )
 
-    # Chat input
-    user_input = st.chat_input("Magtanong tungkol sa Araling Panlipunan...")
+    # Chat input — placeholder changes based on language
+    if st.session_state.chat_language == "🇬🇧 English":
+        placeholder = "Ask a question about Araling Panlipunan..."
+    elif st.session_state.chat_language == "🇵🇭 Filipino":
+        placeholder = "Magtanong tungkol sa Araling Panlipunan..."
+    else:
+        placeholder = "Ask in English or Filipino / Magtanong sa English o Filipino..."
+
+    user_input = st.chat_input(placeholder)
 
     if user_input:
         # Add user message
@@ -1456,8 +1522,8 @@ elif menu == "🤖 AI Chatbot":
             {"role": "user", "content": user_input}
         )
 
-        # Get AI response
-        with st.spinner("Nag-iisip ang AI..."):
+        # Get AI response (language-aware)
+        with st.spinner("Nag-iisip ang AI... / AI is thinking..."):
             ai_response = get_ai_response(user_input)
 
         # Add AI response
@@ -1469,19 +1535,22 @@ elif menu == "🤖 AI Chatbot":
 
     # Clear chat button
     st.markdown("---")
-    if st.button("🗑️ I-clear ang Chat"):
-        st.session_state.chat_messages = [
-            {
-                "role": "assistant",
-                "content": (
-                    "Kumusta! Ako ang iyong AI study buddy para sa Grade 8 Araling Panlipunan. "
-                    "Maaari mo akong tanungin tungkol sa mga paksa tulad ng mga sinaunang kabihasnan, "
-                    "Renaissance, Rebolusyong Industriyal, United Nations, at iba pa. "
-                    "Ano ang gusto mong pag-usapan?"
-                ),
-            }
-        ]
-        st.rerun()
+    col_clear1, col_clear2 = st.columns([1, 4])
+    with col_clear1:
+        if st.button("🗑️ Clear / I-clear"):
+            st.session_state.chat_messages = [
+                {
+                    "role": "assistant",
+                    "content": (
+                        "Hi! I'm your AI study buddy for Grade 8 Araling Panlipunan. "
+                        "You can ask me about topics like ancient civilizations, the Renaissance, "
+                        "the Industrial Revolution, the United Nations, and more. "
+                        "Kumusta! Ako ang iyong AI study buddy — puwede ka ring magtanong sa Filipino. "
+                        "Ano ang gusto mong pag-usapan?"
+                    ),
+                }
+            ]
+            st.rerun()
 
 # ── Tungkol sa MATATAG ──────────────────────────────────────────────
 elif menu == "ℹ️ Tungkol sa MATATAG":
